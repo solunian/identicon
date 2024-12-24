@@ -3,7 +3,7 @@ mod identicon;
 use std::hash::Hasher;
 
 fn main() {
-    let seed = "s;klfjsklwjrk;lwjf;lkw";
+    let seed = "thelosttree";
 
     let mut std_hash = std::hash::DefaultHasher::new();
     std_hash.write(seed.as_bytes());

@@ -20,8 +20,6 @@ static PALLETTE: [[u8; 3]; 16] = [
     [184, 192, 224],
 ];
 
-
-// no symmetry tho
 pub fn gen_github_style(fname: &str, hash_val: u64) {
     const IMGW: u32 = 8;
     const IMGH: u32 = 8;
@@ -35,12 +33,15 @@ pub fn gen_github_style(fname: &str, hash_val: u64) {
 
 
     let mut bits = [false; (IMGW * IMGH) as usize];
-    for i in 0..64 {
-        bits[i] = (hash_val >> i) & 0b1 == 1;
+    for i in 0..(IMGW * IMGH) {
+        bits[i as usize] = (hash_val >> i) & 0b1 == 1;
     }
 
     let mut imgbuf = image::ImageBuffer::new(IMGW, IMGH);
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
+
+        let x = if x >= IMGW / 2 {IMGW - x - 1} else {x};
+
         *pixel = image::Rgb(match bits[(x + y * IMGW) as usize] {
             true => c1,
             false => c2,
