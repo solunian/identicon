@@ -51,6 +51,7 @@ pub fn gen_github_style(fname: &str, hash_val: u64) {
     imgbuf.save(fname).unwrap();    
 }
 
+#[allow(dead_code)]
 pub fn gen_pixel_icon(fname: &str, hash_val: u64) {
     // we can use a sliding window of 3? 4? bits to index into a color pallette 
 
