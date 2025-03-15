@@ -1,4 +1,4 @@
-use image;
+use image::{self, imageops::resize};
 
 // catppuccin macchiato
 static PALLETTE: [[u8; 3]; 16] = [
@@ -20,9 +20,10 @@ static PALLETTE: [[u8; 3]; 16] = [
     [184, 192, 224],
 ];
 
-pub fn gen_github_style(fname: &str, hash_val: u64) {
+pub fn gen_github_style(fname: &str, hash_val: u64, scale: u32) {
     const IMGW: u32 = 8;
     const IMGH: u32 = 8;
+    const DEFAULT_WH: u32 = 256; // the output image will be 256x256
 
     let c1 = PALLETTE[(hash_val % 16) as usize];
     let mut c2 = c1.clone();
@@ -31,7 +32,6 @@ pub fn gen_github_style(fname: &str, hash_val: u64) {
     c2[1] = (c2[1] as f64 * darken_factor) as u8;
     c2[2] = (c2[2] as f64 * darken_factor) as u8;
 
-
     let mut bits = [false; (IMGW * IMGH) as usize];
     for i in 0..(IMGW * IMGH) {
         bits[i as usize] = (hash_val >> i) & 0b1 == 1;
@@ -39,8 +39,7 @@ pub fn gen_github_style(fname: &str, hash_val: u64) {
 
     let mut imgbuf = image::ImageBuffer::new(IMGW, IMGH);
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-
-        let x = if x >= IMGW / 2 {IMGW - x - 1} else {x};
+        let x = if x >= IMGW / 2 { IMGW - x - 1 } else { x };
 
         *pixel = image::Rgb(match bits[(x + y * IMGW) as usize] {
             true => c1,
@@ -48,12 +47,18 @@ pub fn gen_github_style(fname: &str, hash_val: u64) {
         });
     }
 
-    imgbuf.save(fname).unwrap();    
+    imgbuf = resize(
+        &imgbuf,
+        DEFAULT_WH * scale,
+        DEFAULT_WH * scale,
+        image::imageops::FilterType::Nearest,
+    );
+    imgbuf.save(fname).unwrap();
 }
 
 #[allow(dead_code)]
 pub fn gen_pixel_icon(fname: &str, hash_val: u64) {
-    // we can use a sliding window of 3? 4? bits to index into a color pallette 
+    // we can use a sliding window of 3? 4? bits to index into a color pallette
 
     // use bits to determine if pixel is "on" / "off"
     // "on" -> index into pallette
@@ -62,24 +67,22 @@ pub fn gen_pixel_icon(fname: &str, hash_val: u64) {
     let bitmask = 0b1111;
 
     let mut palette_idx: [u64; 256] = [0; 256];
-    
+
     for i in 0..128 {
         //todo: when i > 252 its just 0000 but should we care?
         let bits = (hash_val as u128 >> i) & bitmask;
         palette_idx[i] = bits as u64;
         palette_idx[256 - 1 - i] = bits as u64;
     }
-    
+
     let imgw = 8;
     let imgh = 8;
 
     // Create a new ImgBuf with width: imgx and height: imgy
     let mut imgbuf = image::ImageBuffer::new(imgw, imgh);
 
-
     // Iterate over the coordinates and pixels of the image
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-
         // println!(" {x}, {y}" );
         *pixel = image::Rgb(PALLETTE[palette_idx[(x + y * imgw) as usize] as usize]);
     }
